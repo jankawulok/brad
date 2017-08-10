@@ -101,6 +101,7 @@ class FilterQueryBuilder extends AbstractQueryBuilder
             } else {
                 $query = $this->getAggsQuery($selectedFilters, $filter->getInputName());
                 $categoriesQuery = $this->getQueryFromCategories($idCategory);
+
                 $query->add($categoriesQuery, BoolQuery::SHOULD);
             }
 

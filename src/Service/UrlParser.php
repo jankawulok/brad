@@ -146,7 +146,7 @@ class UrlParser
         $availableOrderBy = [Sort::BY_NAME, Sort::BY_PRICE, Sort::BY_QUANTITY, Sort::BY_REFERENCE, Sort::BY_RELEVANCE];
 
         if (!in_array($orderBy, $availableOrderBy)) {
-            $orderBy = Sort::BY_RELEVANCE;
+            $orderBy = Sort::BY_QUANTITY;
         }
 
         return $orderBy;
@@ -164,7 +164,7 @@ class UrlParser
         $ways = [Sort::WAY_ASC, Sort::WAY_DESC];
 
         if (!in_array($orderWay, $ways)) {
-            $orderWay = Sort::WAY_ASC;
+            $orderWay = Sort::WAY_DESC;
         }
 
         return $orderWay;
@@ -178,7 +178,6 @@ class UrlParser
     public function getSearchQuery()
     {
         $searchQuery = Tools::getValue('search_query', '');
-
         return $searchQuery;
     }
 

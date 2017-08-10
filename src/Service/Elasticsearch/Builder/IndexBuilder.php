@@ -64,12 +64,31 @@ class IndexBuilder
                 'number_of_shards' => $numberOfShards,
                 'number_of_replicas' => $numberOfReplicas,
                 'refresh_interval' => $refreshInterval.'s',
+                'analysis' => [
+                    'analyzer' => [
+                        'default' => [
+                            'tokenizer' => 'standard',
+                            'filter' => [
+                                "standard", 
+                                "asciifolding",
+                                "lowercase"
+                            ],
+                        ],
+                    ],
+                ],
             ],
             'mappings' => [
                 'products' => [
                     'properties' => [
                         'weight' => [
                             'type' => 'double',
+                        ],
+                        'quantity' => [
+                            'type' => 'integer',
+                        ],
+                        'date_add' => [
+                            'type' => 'date',
+                            "format" => "yyyy-MM-dd HH:mm:ss",
                         ],
                         'reference' => [
                             'type' => 'string',
@@ -150,6 +169,7 @@ class IndexBuilder
                 'fields' => [
                     'raw' => [
                         'type' => 'string',
+                        // "analyzer" => "simple"
                         'index' => 'not_analyzed',
                     ],
                 ],

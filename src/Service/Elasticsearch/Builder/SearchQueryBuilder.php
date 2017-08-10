@@ -46,7 +46,6 @@ class SearchQueryBuilder extends AbstractQueryBuilder
         $idLang = (int) $context->language->id;
         $isFuzzySeearchEnabled = (bool) Configuration::get(Setting::FUZZY_SEARCH);
         $searchQueryString = $searchData->getSearchQuery();
-
         $searchQuery = [
             'query' => [
                 'bool' => [
@@ -55,7 +54,7 @@ class SearchQueryBuilder extends AbstractQueryBuilder
                             'match_phrase_prefix' => [
                                 'name_lang_'.$idLang => [
                                     'query' => $searchQueryString,
-                                    'boost' => 3,
+                                    'boost' => 30,
                                 ],
                             ],
                         ],

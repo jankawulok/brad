@@ -98,17 +98,17 @@ class BradSearchModuleFrontController extends AbstractBradModuleFrontController
         $orderBy             = $urlParser->getOrderBy();
         $originalSearchQuery = $urlParser->getSearchQuery();
         $searchQuery         = Tools::replaceAccentedChars(urldecode($originalSearchQuery));
-
         /** @var \Invertus\Brad\Service\SearchService $searchService */
         $searchService = $this->get('search_service');
+
 
         $searchData = new SearchData();
         $searchData->setSize($size);
         $searchData->setPage($page);
-        $searchData->setOrderWay($orderWay);
-        $searchData->setOrderBy($orderBy);
+        // $searchData->setOrderWay($orderWay);
+        $searchData->setOrderBy('score');
+        $searchData->setOrderWay('desc');
         $searchData->setSearchQuery($searchQuery);
-
         $products = $searchService->searchProducts($searchData);
         $productsCount = $searchService->countProducts($searchData);
 

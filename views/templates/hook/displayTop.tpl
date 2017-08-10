@@ -16,7 +16,7 @@
 * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *}
 
-<div id="bradSearchBlockTop" class="col-sm-4 clearfix">
+<div id="bradSearchBlockTop" class="toolbar-toggle">
     <form id="bradSearchBox" method="GET" action="{$brad_search_url|escape:'htmlall':'UTF-8'}">
         <input class="search_query form-control ac_input"
                type="text"

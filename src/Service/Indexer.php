@@ -178,6 +178,7 @@ class Indexer
                     break;
                 case self::INDEX_MISSING_PRODUCTS:
                     $bulkParams = $this->getProductsBulkParams($idShop, $products, true, $indexPrefix);
+                    var_dump($bulkParams);
                     break;
                 default:
                 case self::INDEX_ALL_PRODUCTS:

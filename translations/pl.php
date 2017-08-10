@@ -1,0 +1,34 @@
+<?php
+
+global $_MODULE;
+$_MODULE = array();
+$_MODULE['<{brad}prestashop>bradfilter_3601146c4e948c32b6424d2c0a7f0118'] = 'Cena';
+$_MODULE['<{brad}prestashop>bradfilter_8c489d0946f66d17d73f26366a4bf620'] = 'Waga';
+$_MODULE['<{brad}prestashop>bradfilter_21021ea0e52be8e9c599f4dff41e5be0'] = 'Cecha';
+$_MODULE['<{brad}prestashop>bradfilter_c0bd7654d5b278e65f21cf4e9153fdb4'] = 'Marka';
+$_MODULE['<{brad}prestashop>bradfilter_27ce7f8b5623b2e2df568d64cf051607'] = 'Stan';
+$_MODULE['<{brad}prestashop>bradfilter_3adbdb3ac060038aa0e6e6c138ef9873'] = 'Kategoria';
+$_MODULE['<{brad}prestashop>bradproduct_fcebe56087b9373f15514831184fa572'] = 'Dostępny';
+$_MODULE['<{brad}prestashop>bradproduct_b55197a49e8c4cd8c314bc2aa39d6feb'] = 'Niedostępny';
+$_MODULE['<{brad}prestashop>templating_3601146c4e948c32b6424d2c0a7f0118'] = 'Cena';
+$_MODULE['<{brad}prestashop>templating_c0bd7654d5b278e65f21cf4e9153fdb4'] = 'Marka';
+$_MODULE['<{brad}prestashop>templating_694e8d1f2ee056f98ee488bdc4982d73'] = 'Ilość';
+$_MODULE['<{brad}prestashop>templating_3adbdb3ac060038aa0e6e6c138ef9873'] = 'Kategoria';
+$_MODULE['<{brad}prestashop>templating_8c489d0946f66d17d73f26366a4bf620'] = 'Waga';
+$_MODULE['<{brad}prestashop>templating_88183b946cc5f0e8c96b2e66e1c74a7e'] = 'Nieznany';
+$_MODULE['<{brad}prestashop>templating_69d08bd5f8cf4e228930935c3f13e42f'] = 'Dostępny';
+$_MODULE['<{brad}prestashop>templating_b55197a49e8c4cd8c314bc2aa39d6feb'] = 'Niedostępny';
+$_MODULE['<{brad}prestashop>templating_636d02e754178716a576790b17fce5ad'] = 'Nieznana wartość';
+$_MODULE['<{brad}prestashop>template_filters_select_93cba07454f06a4a960172bbd6e2a435'] = 'Tak';
+$_MODULE['<{brad}prestashop>template_filters_select_bafd7322c6e97d25b6299b5d6fe8920b'] = 'Nie';
+$_MODULE['<{brad}prestashop>filter-template_d7778d0c64b6ba21494c97f77a66885a'] = 'Filtry';
+$_MODULE['<{brad}prestashop>filter-template_1e6d57e813355689e9c77e947d73ad8f'] = 'Od:';
+$_MODULE['<{brad}prestashop>filter-template_33caa076f23f453dd4061726f3706325'] = 'Do:';
+$_MODULE['<{brad}prestashop>filter-template_37b19816109a32106d109e83bbb3c97d'] = 'zakres';
+$_MODULE['<{brad}prestashop>loader_8524de963f07201e5c086830d370797f'] = 'Ładowanie...';
+$_MODULE['<{brad}prestashop>no-products-found_5c9838becf9bbce28ba90a7426daf171'] = 'Brak produktów.';
+$_MODULE['<{brad}prestashop>results-not-found-alert_010d631c631b20bff8721826b7a1b13e'] = 'Nie znaleziono żadnych wyników wyszukiwania dla \"%s\"';
+$_MODULE['<{brad}prestashop>search-input-autocomplete_33a34a8b0fe21d4e480fd250060f41f4'] = 'Zobacz wszystkie';
+$_MODULE['<{brad}prestashop>search-input-autocomplete_20857c0b7ef80d82e87a698b9b2409cd'] = 'Nie znaleziono żadnych wyników';
+$_MODULE['<{brad}prestashop>selected-filters_3488a51eb7f723d65daeff912e69b177'] = 'Wybrane filtry';
+$_MODULE['<{brad}prestashop>displaytop_13348442cc6a27032d2b4aa28b75a5d3'] = 'Szukaj';

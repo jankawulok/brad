@@ -45,7 +45,7 @@ class Brad extends Module
     /**
      * @var \Invertus\Brad\Container\Container
      */
-    private $container;
+    public $container;
 
     /**
      * Brad constructor.
@@ -224,7 +224,7 @@ class Brad extends Module
             'search_query'            => Tools::getValue('search_query', ''),
         ]);
 
-        return $this->context->smarty->fetch($this->container->get('brad_templates_dir').'hook/displayTop.tpl');
+        return $this->display(__FILE__,'views/templates/hook/displayTop.tpl');
     }
 
     /**
@@ -405,8 +405,7 @@ class Brad extends Module
     private function isFilterAvailableInController()
     {
         $availableControllers = ['category'];
-        $currentController = Tools::getValue('controller');
-
+        $currentController = $this->context->controller->php_self;
         return in_array($currentController, $availableControllers);
     }
 

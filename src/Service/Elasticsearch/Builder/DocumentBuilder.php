@@ -92,7 +92,7 @@ class DocumentBuilder
         $body['upc']                    = (string) $product->upc;
         $body['price']                  = (float) $product->price;
         $body['show_price']             = $product->show_price;
-        $body['quantity']               = $product->quantity;
+        $body['quantity']               = (int) StockAvailable::getQuantityAvailableByProduct($product->id);
         $body['customizable']           = $product->customizable;
         $body['minimal_quantity']       = $product->minimal_quantity;
         $body['available_for_order']    = $product->available_for_order;
@@ -101,9 +101,21 @@ class DocumentBuilder
         $body['out_of_stock']           = $product->out_of_stock;
         $body['is_virtual']             = $product->is_virtual;
         $body['on_sale']                = $product->on_sale;
+        $body['date_add']               = $product->date_add;
         $body['id_image']               = (int) Product::getCover($product->id)['id_image'];
         $body['id_combination_default'] = (int) $product->getDefaultIdProductAttribute();
         $body['categories']             = array_map('intval', $product->getCategories());
+        $body['reduction'] = Product::getPriceStatic(
+            (int) $product->id,
+            true,
+            0,
+            6,
+            null,
+            true,
+            true,
+            1,
+            true
+        );
 
         $totalQuantity = StockAvailable::getQuantityAvailableByProduct($product->id);
 

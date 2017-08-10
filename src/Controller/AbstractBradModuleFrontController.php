@@ -76,7 +76,6 @@ abstract class AbstractBradModuleFrontController extends \ModuleFrontController
             $row['allow_oosp'] = $allowOosp;
 
             $productProperties = Product::getProductProperties($this->context->language->id, $row);
-
             foreach ($product['_source'] as $key => $value) {
                 if (!array_key_exists($key, $productProperties)) {
                     $productProperties[$key] = $value;

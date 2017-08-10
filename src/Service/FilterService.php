@@ -72,10 +72,8 @@ class FilterService
     public function filterProducts(FilterData $filterData)
     {
         $productsFilterQuery = $this->filterQueryBuilder->buildFilterQuery($filterData);
-
         $idShop  = (int) $this->context->shop->id;
         $products = $this->elasticsearchSearch->searchProducts($productsFilterQuery, $idShop);
-
         return $products;
     }
 

@@ -22,60 +22,53 @@
  * ----------------------------------------------------------------------
  */
 #bradSearchBlockTop {
-    padding-top: 50px;
+
 }
 
 #bradSearchBlockTop #bradSearchBox {
-    float: left;
-    width: 100%;
+
 }
 
 form#bradSearchBox {
-    position: relative;
+
 }
 
 #bradSearchBlockTop #bradSearchQuery {
-    display: inline;
-    padding: 13px 60px 13px 13px;
-    height: 45px;
-    background: #fbfbfb;
-    margin-right: 1px;
+
+
 }
 
 #bradSearchBlockTop .btn.button-search {
-    background: #333;
-    display: block;
-    position: absolute;
-    top: 0;
-    right: 0;
-    border: none;
-    color: #fff;
-    width: 50px;
-    text-align: center;
-    padding: 10px 0 11px 0;
+
+}
+#bradSearchBlockTop .btn.button-search i{
+
 }
 
 #bradSearchBlockTop .btn.button-search:before {
-    content: "\f002";
+/*    content: "\f002";
     display: block;
     font-family: "FontAwesome";
     font-size: 17px;
     width: 100%;
-    text-align: center;
+    text-align: center;*/
 }
 
 #bradSearchBlockTop .btn.button-search:hover {
-    color: #6f6f6f;
+
 }
 
 #bradSearchBlockTop .button-search span {
-    display: none;
+
 }
 
 #bradInstantSearchResults {
     z-index: 1000;
-    position: absolute;
+    position: fixed;
     width: 100%;
+    /*right: 0;*/
+    /*max-width: 520px;*/
+    /*margin-top: 7px;*/
 }
 
 /**
@@ -85,10 +78,7 @@ form#bradSearchBox {
  */
 #bradInstantSearchResults .brad-autocomplete-block {
     z-index: 1000 !important;
-    border: 1px solid #a0a0a0;
     background-color: #ffffff;
-    border-radius: 3px;
-    box-shadow: 3px 3px 10px rgba(100, 100, 100, 0.9);
     width: auto !important;
     min-width: 300px;
 }
@@ -127,9 +117,12 @@ form#bradSearchBox {
     padding: 0 3px 0 3px;
 }
 
+#bradSearchBlockTop .btn.button-search:hover, #bradSearchBlockTop .btn.button-search:focus, #bradSearchBlockTop .btn.button-search:active  {
+        background-color: transparent;
+        border: none;
+}
 #bradSearchBlockTop .brad-autocomplete-info-block span {
     padding-top: 2px;
-    font-size: 1.0em;
 }
 
 #bradInstantSearchResults .brad-autocomplete-item-image {
@@ -157,8 +150,10 @@ form#bradSearchBox {
 }
 
 .brad-cirteria-color {
-    width: 15px;
-    height: 15px;
+    width: 25px;
+    height: 25px;
+    border-radius: 25px;
+    vertical-align: middle;
     display: inline-block;
 }
 
@@ -174,7 +169,10 @@ form#bradSearchBox {
 
 #bradSelectedFilters {
     background-color: #f6f6f6;
-    padding: 5px;
+    padding: 10px;
     border: 1px solid rgba(0, 0, 0, .1);
     margin-top: 10px;
+    margin-bottom: 10px;
+    border-radius: 20px;
+    clear: both;
 }
