@@ -62,6 +62,9 @@ abstract class AbstractQueryBuilder
             case Sort::BY_REFERENCE:
                 $fieldNameToSortBy = 'reference.raw';
                 break;
+            case Sort::BY_NUMBER_SOLD:
+                $fieldNameToSortBy = 'number_sold';
+                break;
             default:
             case Sort::BY_RELEVANCE:
                 $fieldNameToSortBy = '_score';

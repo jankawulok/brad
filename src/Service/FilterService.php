@@ -73,6 +73,7 @@ class FilterService
     {
         $productsFilterQuery = $this->filterQueryBuilder->buildFilterQuery($filterData);
         $idShop  = (int) $this->context->shop->id;
+        // var_dump(json_encode($productsFilterQuery));
         $products = $this->elasticsearchSearch->searchProducts($productsFilterQuery, $idShop);
         return $products;
     }
@@ -109,7 +110,7 @@ class FilterService
         }
 
         $aggregationsQuery = $this->filterQueryBuilder->buildAggregationsQuery($filterData);
-
+        // var_dump(json_encode($aggregationsQuery));
         if (empty($aggregationsQuery)) {
             return [];
         }
@@ -138,7 +139,6 @@ class FilterService
                 $productsAggregations[$inputName]['total_count'] += $docCount;
             }
         }
-
         return $productsAggregations;
     }
 }

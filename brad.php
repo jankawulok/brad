@@ -41,6 +41,7 @@ class Brad extends Module
      */
     const FRONT_BRAD_SEARCH_CONTROLLER = 'search';
     const FRONT_BRAD_FILTER_CONTROLLER = 'filter';
+    const FRONT_BRAD_MANUFACTURER_CONTROLLER = 'manufacturer';
 
     /**
      * @var \Invertus\Brad\Container\Container
@@ -165,13 +166,27 @@ class Brad extends Module
             $jsUri = $this->container->get('brad_js_uri');
             $this->context->controller->addJqueryUI('ui.slider');
             $this->context->controller->addJS($jsUri.'front/filter.js');
-
             $bradFilterUrl = $this->context->link->getModuleLink($this->name, self::FRONT_BRAD_FILTER_CONTROLLER);
-
+            $controllerName = $this->context->controller->php_self;
+            switch ($controllerName) {
+                case 'category':
+                    $globalEndityId = (int) Tools::getValue('id_category');
+                    break;
+                
+                case 'manufacturer':
+                    $globalEndityId = (int) Tools::getValue('id_manufacturer');
+                    break;
+                default:
+                    $globalEndityId = 0;
+                break;
+            }
             Media::addJsDef([
                 '$globalBradFilterUrl' => $bradFilterUrl,
+                '$globalEndityId'      =>$globalEndityId,
+                '$globalControllerName'=> $this->context->controller->php_self,
                 '$globalBaseUrl'       => $this->context->link->getCategoryLink(Tools::getValue('id_category')),
                 '$globalIdCategory'    => (int) Tools::getValue('id_category'),
+                '$globalIdManufacturer'    => (int) Tools::getValue('id_manufacturer'),
             ]);
         }
 
@@ -218,6 +233,10 @@ class Brad extends Module
         $isFriendlyUrlEnabled = (bool) Configuration::get('PS_REWRITING_SETTINGS');
         $bradSearchUrl = $this->context->link->getModuleLink($this->name, self::FRONT_BRAD_SEARCH_CONTROLLER);
 
+        Media::addJsDef([
+                '$globalBradSearchQuery' => Tools::getValue('search_query', ''),
+            ]);
+
         $this->context->smarty->assign([
             'brad_search_url'         => $bradSearchUrl,
             'is_friendly_url_enabled' => $isFriendlyUrlEnabled,
@@ -237,7 +256,6 @@ class Brad extends Module
         }
 
         $isFiltersEnalbed = (bool) Configuration::get(\Invertus\Brad\Config\Setting::ENABLE_FILTERS);
-
         if (!$this->isFilterAvailableInController() || !$isFiltersEnalbed) {
             return '';
         }
@@ -251,13 +269,20 @@ class Brad extends Module
         $page       = $urlParser->getPage();
         $n          = $urlParser->getSize();
         $idCategory = $urlParser->getIdCategory();
+        $idManufacturer = $urlParser->getIdManufacturer();
+        $idEntity        = $urlParser->getIdEntity();
 
         $filterData = new \Invertus\Brad\DataType\FilterData();
         $filterData->setSize($n);
         $filterData->setPage($page);
         $filterData->setOrderWay($orderWay);
         $filterData->setOrderBy($orderBy);
-        $filterData->setIdCategory($idCategory);
+
+        // $filterData->setIdCategory($idCategory);
+        // $filterData->setIdManufacturer($idManufacturer);
+        $filterData->setIdEntity($idEntity);
+        $filterData->setControllerName($this->context->controller->php_self);
+
         $filterData->setSelectedFilters($selectedFilters);
         $filterData->initFilters();
 
@@ -403,8 +428,8 @@ class Brad extends Module
      * Check if filtering is available in controller
      */
     private function isFilterAvailableInController()
-    {
-        $availableControllers = ['category'];
+    {  
+        $availableControllers = ['category', 'manufacturer', 'prices-drop', 'best-sales', 'module-brad-search', 'new-products'];
         $currentController = $this->context->controller->php_self;
         return in_array($currentController, $availableControllers);
     }

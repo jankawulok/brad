@@ -30,6 +30,9 @@ use FeatureValue;
 use Manufacturer;
 use Product;
 use StockAvailable;
+use ProductSale;
+use Shop;
+use Db;
 
 /**
  * Class DocumentBuilder
@@ -80,6 +83,28 @@ class DocumentBuilder
      */
     public function buildProductBody(Product $product)
     {
+        $totalQuantity = StockAvailable::getQuantityAvailableByProduct($product->id);
+        $categories = array_map('intval', $product->getCategories());
+        $categoriesWithParents=[];
+        foreach ($categories as $idCategory) {
+            $category = new Category($idCategory);
+            $parents = Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
+            SELECT id_category
+            FROM '._DB_PREFIX_.'category
+            WHERE nleft < '.$category->nleft.'
+            AND nright > '.$category->nright.'
+            ');
+            if($parents)
+            {
+                foreach ($parents as $parent) {
+                    $categoriesWithParents[] = (int) $parent['id_category'];
+                }
+            }
+            $categoriesWithParents = array_unique(array_merge($categoriesWithParents, $categories));
+        }
+        // var_dump($categoriesWithParents);
+        
+
         $body = [];
         $body['id_product']             = (int) $product->id;
         $body['id_supplier']            = (int) $product->id_supplier;
@@ -92,7 +117,7 @@ class DocumentBuilder
         $body['upc']                    = (string) $product->upc;
         $body['price']                  = (float) $product->price;
         $body['show_price']             = $product->show_price;
-        $body['quantity']               = (int) StockAvailable::getQuantityAvailableByProduct($product->id);
+        $body['quantity']               = (int) $totalQuantity;
         $body['customizable']           = $product->customizable;
         $body['minimal_quantity']       = $product->minimal_quantity;
         $body['available_for_order']    = $product->available_for_order;
@@ -104,20 +129,10 @@ class DocumentBuilder
         $body['date_add']               = $product->date_add;
         $body['id_image']               = (int) Product::getCover($product->id)['id_image'];
         $body['id_combination_default'] = (int) $product->getDefaultIdProductAttribute();
-        $body['categories']             = array_map('intval', $product->getCategories());
-        $body['reduction'] = Product::getPriceStatic(
-            (int) $product->id,
-            true,
-            0,
-            6,
-            null,
-            true,
-            true,
-            1,
-            true
-        );
+        $body['categories']             = $categoriesWithParents;
+        $body['number_sold']            = (int) ProductSale::getNbrSales((int) $product->id);
 
-        $totalQuantity = StockAvailable::getQuantityAvailableByProduct($product->id);
+        
 
         $body['in_stock_when_global_oos_allow_orders'] = (int) (0 < $totalQuantity || BradProduct::DENY_ORDERS_WHEN_OOS != $product->out_of_stock);
         $body['in_stock_when_global_oos_deny_orders']  = (int) (0 < $totalQuantity || BradProduct::ALLOW_ORDERS_WHEN_OOS == $product->out_of_stock);
@@ -146,6 +161,7 @@ class DocumentBuilder
                     $body['feature_'.$featureObj->id.'_lang_'.$idLang] = (string) $name;
                     $body['feature_value_'.$featureValueObj->id.'_lang_'.$idLang] = (string) $featureValueObj->value[$idLang];
                     $body['feature_value_keywords_lang_'.$idLang][] = (string) $featureValueObj->value[$idLang];
+                    $body['feature_keywords_lang_'.$idLang][] = (string) $featureObj->name[$idLang];
                 }
             }
         }
@@ -165,6 +181,7 @@ class DocumentBuilder
 
         return $body;
     }
+
 
     /**
      * Build product prices body
@@ -204,6 +221,51 @@ class DocumentBuilder
                     );
 
                     $body['price_group_'.$idGroup.'_country_'.$idCountry.'_currency_'.$idCurrency] = $price;
+                }
+            }
+        }
+
+        return $body;
+    }
+
+    /**
+     * Build product price reduction amounts body
+     *
+     * @param Product $product
+     * @param int $idShop
+     *
+     * @return array
+     */
+    public function buildProductPriceReductionBody(Product $product, $idShop)
+    {
+        $useTax = (bool) Configuration::get('PS_TAX');
+
+        $body = [];
+
+        foreach (self::$groupsIds as $idGroup) {
+            foreach (self::$countriesIds as $idCountry) {
+                foreach (self::$currenciesIds as $idCurrency) {
+
+                    $price = (float) Product::priceCalculation(
+                        $idShop,
+                        $product->id,
+                        null,
+                        $idCountry,
+                        null,
+                        null,
+                        $idCurrency,
+                        $idGroup,
+                        $product->minimal_quantity,
+                        $useTax,
+                        6,
+                        true,
+                        true,
+                        true,
+                        $pr,
+                        true
+                    );
+
+                    $body['reduction_group_'.$idGroup.'_country_'.$idCountry.'_currency_'.$idCurrency] = $price;
                 }
             }
         }

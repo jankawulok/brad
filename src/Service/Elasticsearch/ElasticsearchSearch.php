@@ -66,7 +66,6 @@ class ElasticsearchSearch
         } catch (Exception $e) {
             return [];
         }
-
         if ($aggregations) {
             return $response['aggregations'];
         }

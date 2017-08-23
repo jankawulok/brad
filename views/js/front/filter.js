@@ -31,7 +31,9 @@ $(document).ready(function() {
     var $originalHeadingCounter = $centerColumn.find('.heading-counter');
 
     // Dont scroll on page load
-    performFiltering($scrollToList);
+    if ($globalControllerName != 'module-brad-search') {
+        performFiltering($scrollToList);
+    }
     addEventListeners();
     listenSortingAndProductPerPageChange();
 
@@ -41,7 +43,6 @@ $(document).ready(function() {
     function performFiltering($scrollToList)
     {
         $scrollToList = (typeof $scrollToList === 'undefined') ? true : $scrollToList;
-
         var $selectedFilters = getSelectedFilters();
         if ($('.row-offcanvas').hasClass('active')) {
             $('.row-offcanvas').toggleClass('active');
@@ -179,7 +180,7 @@ $(document).ready(function() {
 
                     var $input = $('input[name="' + $inputName + '"]');
 
-                    $input.val($ui.values[0] + ":" + $ui.values[1]);
+                    $input.val($ui.values[0] + " - " + $ui.values[1]);
 
                     if ($selectedMinValue != $defaultMinValue || $selectedMaxValue != $defaultMaxValue) {
                         $input.attr('checked', 'checked');
@@ -192,9 +193,9 @@ $(document).ready(function() {
                 }
             });
 
-            var $value = $($element).slider("values", 0) + ":" + $($element).slider("values", 1);
+            var $value = $($element).slider("values", 0) + " - " + $($element).slider("values", 1);
             if (typeof $selectedMaxValue != 'undefined' && typeof $selectedMinValue != 'undefined') {
-                $value = $selectedMinValue + ':' + $selectedMaxValue;
+                $value = $selectedMinValue + ' - ' + $selectedMaxValue;
             }
 
             $('input[name="' + $inputName + '"]').val($value);
@@ -220,7 +221,7 @@ $(document).ready(function() {
 
         $('.brad-checkbox-filter-input:checked, .brad-slider-filter-input[checked], .brad-input-filter-input[checked]').each(function($index, $element) {
             var $filterName = $($element).attr('name');
-            var $filterValue = $($element).val();
+            var $filterValue = $($element).val().replace(" - ", ":");;
 
             if (typeof $selectedFilters[$filterName] == 'undefined') {
                 $selectedFilters[$filterName] = $filterValue;
@@ -230,12 +231,15 @@ $(document).ready(function() {
         });
 
         var $bradFilterForm = $('#bradFilterForm');
-
-        $selectedFilters['id_category'] = $globalIdCategory;
+        $selectedFilters['controller_name'] = $globalControllerName;
+        $selectedFilters['id_entity']   = $globalEndityId;
         $selectedFilters['orderway']    = $bradFilterForm.find('input[name="orderway"]').val();
         $selectedFilters['orderby']     = $bradFilterForm.find('input[name="orderby"]').val();
         $selectedFilters['p']           = $bradFilterForm.find('input[name="p"]').val();
         $selectedFilters['n']           = $bradFilterForm.find('input[name="n"]').val();
+        if ($globalControllerName == 'module-brad-search') {
+            $selectedFilters['search_query'] = $globalBradSearchQuery;
+        }
 
         return $selectedFilters;
     }
@@ -245,16 +249,16 @@ $(document).ready(function() {
      */
     function appendQueryStringToUrl($queryString)
     {
-        window.history.pushState([], '', $globalBaseUrl);
+        window.history.pushState([], '', request);
 
         if (!$queryString) {
             return;
         }
 
-        if ($globalBaseUrl.indexOf('?') > -1) {
-            window.history.pushState([], '', $globalBaseUrl + '&' + $queryString);
+        if (request.indexOf('?') > -1) {
+            window.history.pushState([], '', request + '&' + $queryString);
         } else {
-            window.history.pushState([], '', $globalBaseUrl + '?' + $queryString);
+            window.history.pushState([], '', request + '?' + $queryString);
         }
     }
 

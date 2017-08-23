@@ -116,7 +116,6 @@ class Indexer
                 return false;
             }
         }
-
         if (!$this->elasticsearchIndexer->createIndex($idShop)) {
             return false;
         }
@@ -178,7 +177,6 @@ class Indexer
                     break;
                 case self::INDEX_MISSING_PRODUCTS:
                     $bulkParams = $this->getProductsBulkParams($idShop, $products, true, $indexPrefix);
-                    var_dump($bulkParams);
                     break;
                 default:
                 case self::INDEX_ALL_PRODUCTS:
@@ -244,7 +242,12 @@ class Indexer
             $productPricesBody = $this->documentBuilder
                 ->buildProductPriceBody($product, $idShop);
 
+            $productPriceReductionBody = $this->documentBuilder
+                ->buildProductPriceReductionBody($product, $idShop);
+
             $body = array_merge($productBody, $productPricesBody);
+            $body = array_merge($body, $productPriceReductionBody);
+
 
             $bulkParams['body'][] = $body;
         }

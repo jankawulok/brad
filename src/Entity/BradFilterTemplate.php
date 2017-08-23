@@ -87,6 +87,11 @@ class BradFilterTemplate extends ObjectModel
         if ($parentReturn) {
             $this->updateFilters();
             $this->updateCategories();
+            $this->updateManufacturers();
+            $this->updateBestsellers();
+            $this->updatePricesDrop();
+            $this->updateNewProducts();
+            $this->updateSearch();
         }
 
         return $parentReturn;
@@ -104,6 +109,11 @@ class BradFilterTemplate extends ObjectModel
         if ($parentReturn) {
             $this->updateFilters();
             $this->updateCategories();
+            $this->updateManufacturers();
+            $this->updateBestsellers();
+            $this->updatePricesDrop();
+            $this->updateNewProducts();
+            $this->updateSearch();
         }
 
         return $parentReturn;
@@ -174,7 +184,7 @@ class BradFilterTemplate extends ObjectModel
         $this->deleteCategories();
 
         $categoriesIds = Tools::getValue('filter_template_categories');
-
+        
         if (!is_array($categoriesIds)) {
             return true;
         }
@@ -184,13 +194,129 @@ class BradFilterTemplate extends ObjectModel
         foreach ($categoriesIds as $idCategory) {
             $templateCategories[] = [
                 'id_brad_filter_template' => (int) $this->id,
-                'id_category' => (int) $idCategory,
+                'controller' => 'category',
+                'id_entity' => (int) $idCategory,
             ];
         }
 
-        $result = Db::getInstance()->insert('brad_filter_template_category', $templateCategories);
+        $result = Db::getInstance()->insert('brad_filter_template_entity', $templateCategories);
 
         return $result;
+    }
+
+    /**
+     * Update filter template manufacturers
+     *
+     * @return bool
+     */
+    protected function updateManufacturers()
+    {
+        $this->deleteManufacturers();
+
+        $manufacturersIds = Tools::getValue('filter_template_manufacturers');
+
+        if (!is_array($manufacturersIds)) {
+            return true;
+        }
+
+        $templatemanufacturers = [];
+
+        foreach ($manufacturersIds as $idManufacturer) {
+            $templatemanufacturers[] = [
+                'id_brad_filter_template' => (int) $this->id,
+                'controller' => 'manufacturer',
+                'id_entity' => (int) $idManufacturer,
+            ];
+        }
+
+        $result = Db::getInstance()->insert('brad_filter_template_entity', $templatemanufacturers);
+
+        return $result;
+    }
+
+    /**
+     * Update filter template bestsellers
+     *
+     * @return bool
+     */
+    protected function updateBestsellers()
+    {
+        $bestsellers = Tools::getValue('filter_template_bestsellers');
+        if ((bool)$bestsellers) {
+            $this->deleteBestsellers();
+            $result = Db::getInstance()->insert('brad_filter_template_entity', [
+            'id_brad_filter_template' => (int) $this->id,
+            'controller' => 'best-sales',
+            'id_entity' => 0,
+            ]);
+
+            return $result;
+        }
+        return true;
+        
+    }
+
+    /**
+     * Update filter template new products
+     *
+     * @return bool
+     */
+    protected function updateNewProducts()
+    {
+        $newProducts = Tools::getValue('filter_template_newproducts');
+        if ((bool)$newProducts) {
+            $this->deleteNewProducts();
+            $result = Db::getInstance()->insert('brad_filter_template_entity', [
+            'id_brad_filter_template' => (int) $this->id,
+            'controller' => 'new-products',
+            'id_entity' => 0,
+            ]);
+
+            return $result;
+        }
+        return true;  
+    }
+
+    /**
+     * Update filter template prices drop
+     *
+     * @return bool
+     */
+    protected function updatePricesDrop()
+    {
+        $newProducts = Tools::getValue('filter_template_pricesdrop');
+        if ((bool)$newProducts) {
+            $this->deletePricesDrop();
+            $result = Db::getInstance()->insert('brad_filter_template_entity', [
+            'id_brad_filter_template' => (int) $this->id,
+            'controller' => 'prices-drop',
+            'id_entity' => 0,
+            ]);
+
+            return $result;
+        }
+        return true;  
+    }
+
+    /**
+     * Update filter template search
+     *
+     * @return bool
+     */
+    protected function updateSearch()
+    {
+        $newProducts = Tools::getValue('filter_template_search');
+        if ((bool)$newProducts) {
+            $this->deleteSearch();
+            $result = Db::getInstance()->insert('brad_filter_template_entity', [
+            'id_brad_filter_template' => (int) $this->id,
+            'controller' => 'module-brad-search',
+            'id_entity' => 0,
+            ]);
+
+            return $result;
+        }
+        return true;  
     }
 
     /**
@@ -214,8 +340,79 @@ class BradFilterTemplate extends ObjectModel
     {
         $db = Db::getInstance();
 
-        $result = $db->delete('brad_filter_template_category', 'id_brad_filter_template = '.(int)$this->id);
+        $result = $db->delete('brad_filter_template_entity', 'controller = "category" AND id_brad_filter_template = '.(int)$this->id);
 
         return $result;
     }
+
+    /**
+     * Delete all template manufacturers
+     *
+     * @return bool
+     */
+    private function deleteManufacturers()
+    {
+        $db = Db::getInstance();
+
+        $result = $db->delete('brad_filter_template_entity', 'controller = "manufacturer"');
+
+        return $result;
+    }
+
+    /**
+     * Delete all template bestsellers
+     *
+     * @return bool
+     */
+    private function deleteBestsellers()
+    {
+        $db = Db::getInstance();
+
+        $result = $db->delete('brad_filter_template_entity', 'controller = "best-sales"');
+
+        return $result;
+    }
+
+    /**
+     * Delete all template prices drop
+     *
+     * @return bool
+     */
+    private function deletePricesDrop()
+    {
+        $db = Db::getInstance();
+
+        $result = $db->delete('brad_filter_template_entity', 'controller = "prices-drop"');
+
+        return $result;
+    }
+
+    /**
+     * Delete all template search
+     *
+     * @return bool
+     */
+    private function deleteSearch()
+    {
+        $db = Db::getInstance();
+
+        $result = $db->delete('brad_filter_template_entity', 'controller = "module-brad-search"');
+
+        return $result;
+    }
+
+    /**
+     * Delete all template new products
+     *
+     * @return bool
+     */
+    private function deleteNewProducts()
+    {
+        $db = Db::getInstance();
+
+        $result = $db->delete('brad_filter_template_entity', 'controller = "new-products"');
+
+        return $result;
+    }
+
 }

@@ -41,9 +41,9 @@ class FilterTemplateRepository extends \Core_Foundation_Database_EntityRepositor
     public function findAllCategories($idFilterTemplate = null, array $excludeTemplatesIds = [])
     {
         $sql = '
-            SELECT bftc.`id_category`
-            FROM `'.$this->getPrefix().'brad_filter_template_category` bftc
-            WHERE 1
+            SELECT bftc.`id_entity`
+            FROM `'.$this->getPrefix().'brad_filter_template_entity` bftc
+            WHERE `controller` = "category"
         ';
 
         if (null !== $idFilterTemplate) {
@@ -63,10 +63,83 @@ class FilterTemplateRepository extends \Core_Foundation_Database_EntityRepositor
         }
 
         foreach ($results as $result) {
-            $categoriesIds[] = (int) $result['id_category'];
+            $categoriesIds[] = (int) $result['id_entity'];
         }
 
         return $categoriesIds;
+    }
+
+    /**
+     * Find all filter template manufacturers ids
+     *
+     * @param int|null $idFilterTemplate
+     * @param array $excludeTemplatesIds
+     *
+     * @return array|int[]
+     */
+    public function findAllManufacturers($idFilterTemplate = null, array $excludeTemplatesIds = [])
+    {
+        $sql = '
+            SELECT bftc.`id_entity`
+            FROM `'.$this->getPrefix().'brad_filter_template_entity` bftc
+            WHERE `controller` = "manufacturer"
+        ';
+
+        if (null !== $idFilterTemplate) {
+            $sql .= ' AND bftc.`id_brad_filter_template` = '.(int)$idFilterTemplate;
+        }
+
+        if (!empty($excludeTemplatesIds)) {
+            $excludeTemplatesIds = array_map('intval', $excludeTemplatesIds);
+            $sql .= ' AND bftc.`id_brad_filter_template` NOT IN ('.implode(',', $excludeTemplatesIds).')';
+        }
+
+        $results = $this->db->select($sql);
+        $categoriesIds = [];
+
+        if (!is_array($results)) {
+            return $categoriesIds;
+        }
+
+        foreach ($results as $result) {
+            $categoriesIds[] = (int) $result['id_entity'];
+        }
+
+        return $categoriesIds;
+    }
+
+    /**
+     * Find all filter template controllers
+     *
+     * @param int|null $idFilterTemplate
+     * @param string $controllerName
+     * @param array $excludeTemplatesIds
+     *
+     * @return int
+     */
+    public function findAllControllers($idFilterTemplate = null, $controllerName, array $excludeTemplatesIds = [])
+    {
+        $sql = '
+            SELECT bftc.`id_entity`
+            FROM `'.$this->getPrefix().'brad_filter_template_entity` bftc
+            WHERE `controller` = "'.pSQL($controllerName).'"
+        ';
+
+        if (null !== $idFilterTemplate) {
+            $sql .= ' AND bftc.`id_brad_filter_template` = '.(int)$idFilterTemplate;
+        }
+
+        if (!empty($excludeTemplatesIds)) {
+            $excludeTemplatesIds = array_map('intval', $excludeTemplatesIds);
+            $sql .= ' AND bftc.`id_brad_filter_template` NOT IN ('.implode(',', $excludeTemplatesIds).')';
+        }
+
+        $results = $this->db->select($sql);
+        if (is_array($results) && count($results)>0) {
+            return 1;
+        }
+
+        return 0;
     }
 
     /**
@@ -101,7 +174,7 @@ class FilterTemplateRepository extends \Core_Foundation_Database_EntityRepositor
      *
      * @return array|FilterStruct[]
      */
-    public function findTemplateFilters($idCategory, $idShop)
+    public function findTemplateFilters($idEntity, $idShop, $controllerName)
     {
         $sql = '
             SELECT f.`id_brad_filter`, f.`filter_type`, f.`filter_style`, f.`id_key`, f.`custom_height`,
@@ -110,16 +183,16 @@ class FilterTemplateRepository extends \Core_Foundation_Database_EntityRepositor
             LEFT JOIN `'.$this->getPrefix().'brad_filter_template_shop` fts
                 ON fts.`id_brad_filter_template` = ft.`id_brad_filter_template`
                     AND fts.`id_shop` = '.(int)$idShop.'
-            LEFT JOIN `'.$this->getPrefix().'brad_filter_template_category` ftc
+            LEFT JOIN `'.$this->getPrefix().'brad_filter_template_entity` ftc
                 ON ft.`id_brad_filter_template` = ftc.`id_brad_filter_template`
-                    AND ftc.`id_category` = '.(int)$idCategory.'
+                    AND ftc.`id_entity` = '.(int)$idEntity.'
+                    AND ftc.`controller` = "'.pSQL($controllerName).'"
             LEFT JOIN `'.$this->getPrefix().'brad_filter_template_filter` ftf
                 ON ftf.`id_brad_filter_template` = ftc.`id_brad_filter_template`
             INNER JOIN `'.$this->getPrefix().'brad_filter` f   
                 ON f.`id_brad_filter` = ftf.`id_brad_filter`
             ORDER BY ftf.`position` ASC
         ';
-
         $results = $this->db->select($sql);
 
         if (!is_array($results) || !$results) {

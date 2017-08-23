@@ -90,6 +90,7 @@ class AdminBradFilterTemplateController extends AbstractAdminBradModuleControlle
             /** @var \Invertus\Brad\Repository\FilterTemplateRepository $filterTemplateRepository */
             $filterTemplateRepository = $this->getRepository('BradFilterTemplate');
             $selectedCategories = $filterTemplateRepository->findAllCategories($this->object->id);
+            $selectedManufacurers = $filterTemplateRepository->findAllManufacturers($this->object->id);
         }
 
         $this->fields_form = [
@@ -118,6 +119,95 @@ class AdminBradFilterTemplateController extends AbstractAdminBradModuleControlle
                     ],
                 ],
                 [
+                    'type'     => 'select',
+                    'multiple' => true,
+                    'label'    => $this->l('Choose the manufacturers'),
+                    'name'     => 'filter_template_manufacturers[]',
+                    'options'   => [
+                        'query' => Manufacturer::getManufacturers(),
+                        'id'    => 'id_manufacturer',
+                        'name'  => 'name',
+                    ],
+                    'expand'   => [
+                        'print_total' => count(Manufacturer::getManufacturers()),
+                        'default' => 'show',
+                        'show' => array('text' => $this->l('show'), 'icon' => 'plus-sign-alt'),
+                        'hide' => array('text' => $this->l('hide'), 'icon' => 'minus-sign-alt')
+                    ],
+                ],
+                [
+                    'type'    => 'switch',
+                    'multiple' => false,
+                    'label'   => $this->l('Enable for Bestsellers'),
+                    'name'    => 'filter_template_bestsellers',
+                    'values'  => [
+                        [
+                            'id'    => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ],
+                        [
+                            'id'    => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        ],
+                    ],
+                ],
+                [
+                    'type'    => 'switch',
+                    'multiple' => false,
+                    'label'   => $this->l('Enable for New Products'),
+                    'name'    => 'filter_template_newproducts',
+                    'values'  => [
+                        [
+                            'id'    => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ],
+                        [
+                            'id'    => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        ],
+                    ],
+                ],
+                [
+                    'type'    => 'switch',
+                    'multiple' => false,
+                    'label'   => $this->l('Enable for Prices Drop'),
+                    'name'    => 'filter_template_pricesdrop',
+                    'values'  => [
+                        [
+                            'id'    => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ],
+                        [
+                            'id'    => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        ],
+                    ],
+                ],
+                [
+                    'type'    => 'switch',
+                    'multiple' => false,
+                    'label'   => $this->l('Enable for Search results'),
+                    'name'    => 'filter_template_search',
+                    'values'  => [
+                        [
+                            'id'    => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ],
+                        [
+                            'id'    => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        ],
+                    ],
+                ],
+                [
                     'type'  => 'free',
                     'label' => $this->l('Enable template filters'),
                     'name'  => 'template_filters',
@@ -134,7 +224,7 @@ class AdminBradFilterTemplateController extends AbstractAdminBradModuleControlle
      */
     protected function _childValidation()
     {
-        $this->validateCategories();
+        $this->validateTemplate();
         $this->validateFilters();
     }
 
@@ -152,6 +242,12 @@ class AdminBradFilterTemplateController extends AbstractAdminBradModuleControlle
             /** @var \Invertus\Brad\Repository\FilterTemplateRepository $filterTemplateRepository */
             $filterTemplateRepository = $this->getRepository('BradFilterTemplate');
             $selectedFilters = $filterTemplateRepository->findAllFilters($this->object->id);
+            $selectedManufacurers = $filterTemplateRepository->findAllManufacturers($this->object->id);
+            $this->fields_value['filter_template_manufacturers[]'] = $selectedManufacurers;
+            $this->fields_value['filter_template_pricesdrop'] = $filterTemplateRepository->findAllControllers($this->object->id, 'prices-drop');
+            $this->fields_value['filter_template_bestsellers'] = $filterTemplateRepository->findAllControllers($this->object->id, 'best-sales');
+            $this->fields_value['filter_template_search'] = $filterTemplateRepository->findAllControllers($this->object->id, 'module-brad-search');
+            $this->fields_value['filter_template_newproducts'] = $filterTemplateRepository->findAllControllers($this->object->id, 'new-products');
 
             $selectedFiltersIds = [];
             $selectedFiltersPositions = [];
@@ -188,6 +284,8 @@ class AdminBradFilterTemplateController extends AbstractAdminBradModuleControlle
         $this->fields_value['template_filters'] = $this->context->smarty->fetch(
             $this->module->getLocalPath().'views/templates/admin/template_filters_select.tpl'
         );
+
+
     }
 
     /**
@@ -196,9 +294,8 @@ class AdminBradFilterTemplateController extends AbstractAdminBradModuleControlle
     protected function validateCategories()
     {
         $checkedCategories = Tools::getValue('filter_template_categories');
-
-        if (empty($checkedCategories)) {
-            $this->errors[] = $this->l('You must select at least one category');
+        if (empty($checkedCategories) && empty($checkedManufacturers)) {
+            $this->errors[] = $this->l('You must select at least one category or manufacturer');
             return;
         }
 
@@ -210,13 +307,62 @@ class AdminBradFilterTemplateController extends AbstractAdminBradModuleControlle
         /** @var \Invertus\Brad\Repository\FilterTemplateRepository $filterTemplateRepository */
         $filterTemplateRepository = $this->getRepository('BradFilterTemplate');
         $allTemplatesCategories = $filterTemplateRepository->findAllCategories(null, $excludeTemplates);
+        $allTemplatesManufacturers = $filterTemplateRepository->findAllManufacturers(null, $excludeTemplates);
 
         $intersect = array_intersect($allTemplatesCategories, $checkedCategories);
-
+        // $intersect = array_intersect($allTemplatesManufacturers, $checkedManufacturers);
         if (!empty($intersect)) {
             $this->errors[] = $this->l('More or more category is already assigned to other template');
         }
     }
+
+    /**
+     * Validate template
+     */
+    protected function validateTemplate()
+    {
+        $checkedCategories = Tools::getValue('filter_template_categories');
+        $checkedManufacturers = Tools::getValue('filter_template_manufacturers');
+        $checkedNewProducts = Tools::getValue('filter_template_newproducts');
+        $checkedBestsellers = Tools::getValue('filter_template_bestsellers');
+        $checkedPricesDrop = Tools::getValue('filter_template_pricesdrop');
+        $checkedSearch = Tools::getValue('filter_template_search');
+        if (empty($checkedCategories)    && 
+            empty($checkedManufacturers) &&
+            empty($checkedNewProducts)   &&
+            empty($checkedBestsellers)   &&
+            empty($checkedPricesDrop)   &&
+            empty($checkedSearch)) {
+            $this->errors[] = $this->l('You must select at least one controller');
+            return;
+        }
+
+        $excludeTemplates = [];
+        if (Tools::isSubmit('id_brad_filter_template')) {
+            $excludeTemplates[] = (int) Tools::getValue('id_brad_filter_template');
+        }
+
+        /** @var \Invertus\Brad\Repository\FilterTemplateRepository $filterTemplateRepository */
+        $filterTemplateRepository = $this->getRepository('BradFilterTemplate');
+        $allTemplatesCategories = $filterTemplateRepository->findAllCategories(null, $excludeTemplates);
+        $allTemplatesManufacturers = $filterTemplateRepository->findAllManufacturers(null, $excludeTemplates);
+
+        if (!empty($checkedCategories)) {
+            $intersect = array_intersect($allTemplatesCategories, $checkedCategories);
+            if (!empty($intersect) && is($checkedCategories)) {
+                $this->errors[] = $this->l('More or more category is already assigned to other template');
+            }
+        }
+        if (!empty($checkedManufacturers)) {
+            $intersect = array_intersect($allTemplatesManufacturers, $checkedManufacturers);
+            if (!empty($intersect) && !empty($checkedManufacturers)) {
+                $this->errors[] = $this->l('More or more manufacturer is already assigned to other template');
+            }
+        }
+        
+
+    }
+       
 
     /**
      * Validate template filters

@@ -21,6 +21,7 @@ use Invertus\Brad\Config\Setting;
 use Invertus\Brad\Controller\AbstractBradModuleFrontController;
 use Invertus\Brad\DataType\FilterData;
 use Invertus\Brad\Service\UrlParser;
+use Invertus\Brad\Config\Sort;
 
 /**
  * Class BradFilterModuleFrontController
@@ -60,19 +61,28 @@ class BradFilterModuleFrontController extends AbstractBradModuleFrontController
 
         $queryString     = $urlParser->getQueryString();
         $selectedFilters = $urlParser->getSelectedFilters();
+        $idEntity        = $urlParser->getIdEntity();
         $idCategory      = $urlParser->getIdCategory();
+        $controllerName  = $urlParser->getControllerName();
         $p               = $urlParser->getPage();
         $n               = $urlParser->getSize();
         $orderWay        = $urlParser->getOrderWay();
         $orderBy         = $urlParser->getOrderBy();
-
         $filterData = new FilterData();
         $filterData->setSize($n);
         $filterData->setPage($p);
         $filterData->setOrderWay($orderWay);
         $filterData->setOrderBy($orderBy);
+        $filterData->setIdEntity($idEntity);
         $filterData->setIdCategory($idCategory);
+        $filterData->setControllerName($controllerName);
         $filterData->setSelectedFilters($selectedFilters);
+
+        if ($controllerName == 'best-sales') {
+            $filterData->setOrderBy(Sort::BY_NUMBER_SOLD);
+            $filterData->setOrderWay(Sort::WAY_DESC);
+        }
+
         $filterData->initFilters();
 
         /** @var \Invertus\Brad\Service\FilterService $filterService */
@@ -81,7 +91,7 @@ class BradFilterModuleFrontController extends AbstractBradModuleFrontController
         $products             = $filterService->filterProducts($filterData);
         $productsCount        = $filterService->countProducts($filterData);
         $productsAggregations = $filterService->aggregateProducts($filterData);
-
+        // var_dump($productsAggregations);
         $products = $this->formatProducts($products);
         $this->addColorsToProductList($products);
 

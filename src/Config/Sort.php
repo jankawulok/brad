@@ -24,8 +24,10 @@ class Sort
     const BY_NAME = 'name';
     const BY_PRICE = 'price';
     const BY_QUANTITY = 'quantity';
-    const BY_RELEVANCE = 'position';
+    const BY_RELEVANCE = '_score';
+    const BY_POSITION = 'position';
     const BY_REFERENCE = 'reference';
+    const BY_NUMBER_SOLD = 'number_sold';
 
     const WAY_DESC = 'desc';
     const WAY_ASC = 'asc';

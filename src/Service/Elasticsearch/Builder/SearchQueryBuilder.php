@@ -31,6 +31,109 @@ use Invertus\Brad\DataType\SearchData;
  */
 class SearchQueryBuilder extends AbstractQueryBuilder
 {
+
+
+    /**
+     * Build search filter query
+     *
+     * @param string $searchQueryString
+     *
+     * @return array
+     */
+    public static function buildProductsFilterQuery($searchQueryString)
+    {
+        $context = Context::getContext();
+
+        $idLang = (int) $context->language->id;
+        $isFuzzySeearchEnabled = (bool) Configuration::get(Setting::FUZZY_SEARCH);
+        $searchQuery = [
+                [
+                    'match_phrase_prefix' => [
+                        'name_lang_'.$idLang => [
+                            'query' => $searchQueryString,
+                            'boost' => 30,
+                        ],
+                    ],
+                ],
+                [
+                    'match_phrase_prefix' => [
+                        'description_lang_'.$idLang => [
+                            'query' => $searchQueryString,
+                            'boost' => 0.7,
+                        ],
+                    ],
+                ],
+                [
+                    'match_phrase_prefix' => [
+                        'short_description_lang_'.$idLang => [
+                            'query' => $searchQueryString,
+                            'boost' => 1,
+                        ],
+                    ],
+                ],
+                [
+                    'match_phrase_prefix' => [
+                        'manufacturer_name' => [
+                            'query' => $searchQueryString,
+                            'boost' => 3,
+                        ],
+                    ],
+                ],
+                [
+                    'match_phrase_prefix' => [
+                        'reference' => [
+                            'query' => $searchQueryString,
+                        ],
+                    ],
+                ],
+                [
+                    'match_phrase_prefix' => [
+                        'category_name' => [
+                            'query' => $searchQueryString,
+                            'boost' => 1.1
+                        ],
+                    ],
+                ],
+                [
+                    'match_phrase_prefix' => [
+                        'feature_value_keywords_lang_'.$idLang => [
+                            'query' => $searchQueryString,
+                            'boost' => 1
+                        ],
+                    ],
+                ],
+                [
+                    'match_phrase_prefix' => [
+                        'feature_keywords_lang_'.$idLang => [
+                            'query' => $searchQueryString,
+                            'boost' => 1
+                        ],
+                    ],
+                ],
+                [
+                    'match_phrase_prefix' => [
+                        'attribute_keywords_lang_'.$idLang => [
+                            'query' => $searchQueryString,
+                        ],
+                    ],
+                ],
+      
+        ];
+
+        if ($isFuzzySeearchEnabled) {
+            $searchQuery[] = [
+                'multi_match' => [
+                    'fields' => ['name_lang_'.$idLang, 'category_name', 'manufacturer_name','feature_value_keywords_lang_'.$idLang, 'feature_keywords_lang_'.$idLang],
+                    'query' => $searchQueryString,
+                    'fuzziness' => 'auto',
+                    'boost' => 2,
+                ],
+            ];
+
+        }
+        return $searchQuery;
+    }
+
     /**
      * Build search query
      *
@@ -62,7 +165,7 @@ class SearchQueryBuilder extends AbstractQueryBuilder
                             'match_phrase_prefix' => [
                                 'description_lang_'.$idLang => [
                                     'query' => $searchQueryString,
-                                    'boost' => 1.5,
+                                    'boost' => 0.7,
                                 ],
                             ],
                         ],
@@ -70,7 +173,7 @@ class SearchQueryBuilder extends AbstractQueryBuilder
                             'match_phrase_prefix' => [
                                 'short_description_lang_'.$idLang => [
                                     'query' => $searchQueryString,
-                                    'boost' => 1.5,
+                                    'boost' => 0.9,
                                 ],
                             ],
                         ],
@@ -78,6 +181,7 @@ class SearchQueryBuilder extends AbstractQueryBuilder
                             'match_phrase_prefix' => [
                                 'manufacturer_name' => [
                                     'query' => $searchQueryString,
+                                    'boost' => 3,
                                 ],
                             ],
                         ],
@@ -92,6 +196,7 @@ class SearchQueryBuilder extends AbstractQueryBuilder
                             'match_phrase_prefix' => [
                                 'category_name' => [
                                     'query' => $searchQueryString,
+                                    'boost' => 1.1
                                 ],
                             ],
                         ],
@@ -99,6 +204,15 @@ class SearchQueryBuilder extends AbstractQueryBuilder
                             'match_phrase_prefix' => [
                                 'feature_value_keywords_lang_'.$idLang => [
                                     'query' => $searchQueryString,
+                                    'boost' => 1
+                                ],
+                            ],
+                        ],
+                        [
+                            'match_phrase_prefix' => [
+                                'feature_keywords_lang_'.$idLang => [
+                                    'query' => $searchQueryString,
+                                    'boost' => 1
                                 ],
                             ],
                         ],
@@ -117,13 +231,13 @@ class SearchQueryBuilder extends AbstractQueryBuilder
         if ($isFuzzySeearchEnabled) {
             $searchQuery['query']['bool']['should'][] = [
                 'multi_match' => [
-                    'fields' => ['name_lang_'.$idLang, 'category_name'],
+                    'fields' => ['name_lang_'.$idLang, 'category_name', 'manufacturer_name','feature_value_keywords_lang_'.$idLang, 'feature_keywords_lang_'.$idLang],
                     'query' => $searchQueryString,
-                    'fuzziness' => 'AUTO',
-                    'prefix_length' => 2,
-                    'max_expansions' => 50,
+                    'fuzziness' => 'auto',
+                    'boost' => 2,
                 ],
             ];
+
         }
 
         if ($countQuery) {
@@ -136,7 +250,6 @@ class SearchQueryBuilder extends AbstractQueryBuilder
         $searchQuery['from'] = (int) $searchData->getFrom();
         $searchQuery['size'] = (int) $searchData->getSize();
         $searchQuery['sort'] = $this->buildOrderQuery($orderBy, $orderWay)->toArray();
-
         return $searchQuery;
     }
 }

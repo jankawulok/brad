@@ -30,6 +30,8 @@ use Invertus\Brad\Util\Arrays;
  */
 class BradSearchModuleFrontController extends AbstractBradModuleFrontController
 {
+    /** string Internal controller name */
+    public $php_self = 'module-brad-search';
     /**
      * Check if elasticsearch connection is available & index exists
      */

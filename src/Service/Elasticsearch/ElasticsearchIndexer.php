@@ -171,9 +171,9 @@ class ElasticsearchIndexer
     {
         $productBody = $this->documentBuilder->buildProductBody($product);
         $productPricesBody = $this->documentBuilder->buildProductPriceBody($product, $idShop);
-
+        $productPriceReductionBody = $this->documentBuilder->buildProductPriceReductionBody($product, $idShop);
         $body = array_merge($productBody, $productPricesBody);
-
+        $body = array_merge($body, $productPriceReductionBody);
         $params = [
             'index' => $this->manager->getIndexPrefix().$idShop,
             'type' => 'products',

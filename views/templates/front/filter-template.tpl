@@ -25,7 +25,8 @@
         <form action="#" id="bradFilterForm">
             <div class="filter_block">
                 {foreach $filters as $filter}
-
+                {* {$filter|@var_dump} *}
+                {* {$aggregations[$filter.inputName]|@var_dump} *}
                     {assign var='is_checkbox_input' value=BradFilter::FILTER_STYLE_CHECKBOX == $filter.filterStyle || BradFilter::FILTER_STYLE_LIST_OF_VALUES == $filter.filterStyle}
 
                     {* If aggregations & hide 0 filters is on and filter style is checkbox then hide filters with 0 products *}
@@ -120,13 +121,14 @@
                                 {assign var='default_max_value' value=$default_prices.1}
 
                                 <div>
-                                    <label>{l s='Range:' mod="brad"} <span class="brad-selected-range"></span></label>
+                                    {* <label>{l s='Range:' mod="brad"} <span class="brad-selected-range"></span></label> *}
                                     <input class="brad-slider-input brad-slider-filter-input"
                                            title="{l s='range' mod='brad'}"
                                            type="text"
                                            readonly
                                            name="{$filter.inputName|escape:'htmlall':'UTF-8'}"
                                     >
+                                    
                                     <div data-min-value="{$default_min_value|escape:'htmlall':'UTF-8'}"
                                          data-max-value="{$default_max_value|escape:'htmlall':'UTF-8'}"
                                          data-input-name="{$filter.inputName|escape:'htmlall':'UTF-8'}"

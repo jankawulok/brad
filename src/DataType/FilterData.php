@@ -51,6 +51,21 @@ class FilterData extends SearchData
     private $idCategory;
 
     /**
+     * @var int
+     */
+    private $idManufacturer;
+
+    /**
+     * @var int
+     */
+    private $idEntity;
+
+    /**
+     * @var string
+     */
+    private $controller;
+
+    /**
      * @var array|FilterStruct[]
      */
     private $filters = [];
@@ -101,6 +116,22 @@ class FilterData extends SearchData
     }
 
     /**
+     * @return string
+     */
+    public function getControllerName()
+    {
+        return $this->controller;
+    }
+
+    /**
+     * @param string $controllerName
+     */
+    public function setControllerName($controllerName)
+    {
+        $this->controller = $controllerName;
+    }
+
+    /**
      * @return int
      */
     public function getIdCategory()
@@ -114,6 +145,38 @@ class FilterData extends SearchData
     public function setIdCategory($idCategory)
     {
         $this->idCategory = $idCategory;
+    }
+
+    /**
+     * @return int
+     */
+    public function getIdEntity()
+    {
+        return $this->idEntity;
+    }
+
+    /**
+     * @param int $idEntity
+     */
+    public function setIdEntity($idEntity)
+    {
+        $this->idEntity = $idEntity;
+    }
+
+    /**
+     * @param int $idManufacturer
+     */
+    public function setIdManufacturer($idManufacturer)
+    {
+        $this->idManufacturer = $idManufacturer;
+    }
+
+    /**
+     * @return int
+     */
+    public function getIdManufacturer()
+    {
+        return $this->idManufacturer;
     }
 
     /**
@@ -141,7 +204,7 @@ class FilterData extends SearchData
 
         /** @var FilterTemplateRepository $filterTemplateRepository */
         $filterTemplateRepository = $this->em->getRepository('BradFilterTemplate');
-        $filters = $filterTemplateRepository->findTemplateFilters($this->getIdCategory(), $idShop);
+        $filters = $filterTemplateRepository->findTemplateFilters($this->getIdEntity(), $idShop, $this->getControllerName());
 
         if (empty($filters)) {
             return;
@@ -440,7 +503,6 @@ class FilterData extends SearchData
         /** @var CategoryRepository $categoryRepository */
         $categoryRepository = $this->em->getRepository('BradCategory');
         $childCategories = $categoryRepository->findChildCategoriesNamesAndIds($category, $idLang, $idShop);
-
         return $childCategories;
     }
 

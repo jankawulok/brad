@@ -59,10 +59,11 @@ class ElasticsearchHelper
      * Get max or min product price
      *
      * @param string $type
+     * @param int $idCategory
      *
      * @return float|null
      */
-    public function getAggregatedProductPrice($type)
+    public function getAggregatedProductPrice($type, $idCategory = null)
     {
         if (!in_array($type, [self::AGGS_MAX, self::AGGS_MIN])) {
             return null;
@@ -91,7 +92,6 @@ class ElasticsearchHelper
         } catch (Exception $e) {
             return null;
         }
-
         return $response['aggregations']['calculated_price']['value'];
     }
 
@@ -99,10 +99,11 @@ class ElasticsearchHelper
      * Get min or max product weight
      *
      * @param string $type
+     * @param int $idCategory
      *
      * @return float|null
      */
-    public function getAggregatedProductWeight($type)
+    public function getAggregatedProductWeight($type, $idCategory = null)
     {
         if (!in_array($type, [self::AGGS_MAX, self::AGGS_MIN])) {
             return null;
@@ -122,7 +123,6 @@ class ElasticsearchHelper
                 ],
             ],
         ];
-
         try {
             $response = $this->elasticsearchManager->getClient()->search($params);
         } catch (Exception $e) {

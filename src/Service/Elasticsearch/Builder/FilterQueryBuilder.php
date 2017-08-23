@@ -21,6 +21,8 @@ namespace Invertus\Brad\Service\Elasticsearch\Builder;
 
 use Category;
 use Context;
+use Configuration;
+use Tools;
 use Invertus\Brad\Converter\NameConverter;
 use Invertus\Brad\DataType\FilterData;
 use Invertus\Brad\DataType\FilterStruct;
@@ -53,12 +55,16 @@ class FilterQueryBuilder extends AbstractQueryBuilder
      */
     public function buildFilterQuery(FilterData $filterData, $countQuery = false)
     {
+        $controllerName = $filterData->getControllerName();
+        $idEntity = $filterData->getIdEntity();
         $query = $this->getProductQueryBySelectedFilters(
             $filterData->getSelectedFilters(),
-            $filterData->getIdCategory()
+            $filterData->getControllerName(),
+            (int)$idEntity
         );
 
         if ($countQuery) {
+            
             return $query->toArray();
         }
 
@@ -70,7 +76,15 @@ class FilterQueryBuilder extends AbstractQueryBuilder
         $query->setFrom($filterData->getFrom());
         $query->setSize($filterData->getSize());
 
+        // echo json_encode($query->toArray());
         return $query->toArray();
+    }
+
+    public function buildSearchFilterQuery()
+    {
+        $originalSearchQuery = Tools::getValue('search_query', '');
+        $searchQueryString = Tools::replaceAccentedChars(urldecode($originalSearchQuery));
+        return SearchQueryBuilder::buildProductsFilterQuery($searchQueryString);
     }
 
     /**
@@ -86,8 +100,9 @@ class FilterQueryBuilder extends AbstractQueryBuilder
         $filters            = $filterData->getFilters(false);
         $selectedFilters    = $filterData->getSelectedFilters();
         $hasSelectedFilters = !empty($selectedFilters);
-        $idCategory         = $filterData->getIdCategory();
-
+        $idEntity           = $filterData->getIdEntity();
+        $controllerName     = $filterData->getControllerName();
+        // var_dump($filterData->getIdEntity());
         if (empty($filters)) {
             return [];
         }
@@ -97,12 +112,49 @@ class FilterQueryBuilder extends AbstractQueryBuilder
             $fieldName = NameConverter::getElasticsearchFieldName($filter->getInputName());
 
             if (!$hasSelectedFilters) {
-                $query = $this->getQueryFromCategories($idCategory);
+                if ($controllerName == 'manufacturer') {
+                    $query = $this->getQueryFromManufacturer($idEntity);
+                }
+                elseif ($controllerName == 'category') {
+                    $query = $this->getQueryFromCategories($idEntity);
+                }
+                elseif ($controllerName == 'prices-drop') {
+                    $query = $this->getQueryFromPricesDrop();
+                }
+                elseif ($controllerName == 'new-products') {
+                    $query = $this->getQueryFromNewProducts();
+                }
+                elseif ($controllerName == 'best-sales') {
+                    $query = $this->getQueryFromBestSales();
+                }
+                elseif ($controllerName == 'module-brad-search') {
+                    $query = new BoolQuery();;
+                }
+                
             } else {
                 $query = $this->getAggsQuery($selectedFilters, $filter->getInputName());
-                $categoriesQuery = $this->getQueryFromCategories($idCategory);
-
-                $query->add($categoriesQuery, BoolQuery::SHOULD);
+                if ($controllerName == 'manufacturer') {
+                    $controllerQuery = $this->getQueryFromManufacturer($idEntity);
+                }
+                elseif ($controllerName == 'category') {
+                    $controllerQuery = $this->getQueryFromCategories($idEntity);
+                }
+                elseif ($controllerName == 'prices-drop') {
+                    $controllerQuery = $this->getQueryFromPricesDrop();
+                }
+                elseif ($controllerName == 'best-sales') {
+                    $controllerQuery = $this->getQueryFromBestSales();
+                }
+                elseif ($controllerName == 'new-products') {
+                    $controllerQuery = $this->getQueryFromNewProducts();
+                }
+                elseif ($controllerName == 'module-brad-search') {
+                    // $controllerQuery = $this->getQueryFromSearch();
+                }
+                if (isset($controllerQuery)) {
+                    $query->add($controllerQuery, BoolQuery::MUST);
+                }
+                
             }
 
             if (in_array($filter->inputName, ['price', 'weight'])) {
@@ -124,11 +176,31 @@ class FilterQueryBuilder extends AbstractQueryBuilder
             }
 
             $filterAggregation = new FilterAggregation($fieldName, $query);
+            if ($controllerName == 'module-brad-searchaaa') {
+                $filterAggregation->addParameter('filter', $this->buildSearchFilterQuery());
+            }
             $filterAggregation->addAggregation($aggregation);
             $searchQuery->addAggregation($filterAggregation);
         }
+        // echo(json_encode($searchQuery->toArray()));
+        if ($controllerName == 'module-brad-search') {
 
-        return $searchQuery->toArray();
+            $originalSearchQuery = Tools::getValue('search_query', '');
+            $searchQueryString = Tools::replaceAccentedChars(urldecode($originalSearchQuery));
+            $searchQueryArray = $searchQuery->toArray();
+            $searchAggregationFilter = SearchQueryBuilder::buildProductsFilterQuery($searchQueryString);
+
+            foreach ($searchQueryArray["aggregations"] as $key => $aggregation) {
+                $searchQueryArray["aggregations"][$key]["filter"]=["bool"=>["should"=>$searchAggregationFilter]];
+            }
+
+            // echo(json_encode($searchQueryArray));
+            return $searchQueryArray;
+        }
+        else {
+            // echo json_encode($searchQuery->toArray());
+            return $searchQuery->toArray();
+        }
     }
 
     /**
@@ -168,35 +240,43 @@ class FilterQueryBuilder extends AbstractQueryBuilder
      * Get search values by selected filters
      *
      * @param array $selectedFilters
-     * @param int $idCategory
+     * @param string $controllerName
+     * @param int $idEntity
      *
      * @return Search
      */
-    protected function getProductQueryBySelectedFilters(array $selectedFilters, $idCategory)
+    protected function getProductQueryBySelectedFilters(array $selectedFilters, $controllerName, $idEntity)
     {
         $searchQuery = new Search();
         $boolMustFilterQuery = new BoolQuery();
-
         $skipCategoriesQuery = false;
+        $filters = null;
+        if ($controllerName == 'module-brad-search') {
+            $filters = $this->buildSearchFilterQuery();
+            $boolSearchQuery = new BoolQuery();
+            $boolSearchQuery->addParameter('should', $filters);
+            $searchQuery->addQuery($boolSearchQuery, BoolQuery::SHOULD);
+            $filters = null;
+        }
 
         foreach ($selectedFilters as $name => $values) {
             if (0 === strpos($name, 'feature') || 0 === strpos($name, 'attribute_group')) {
-                $boolShouldTermQuery = $this->getBoolShouldTermQuery($name, $values);
+                $boolShouldTermQuery = $this->getBoolShouldTermQuery($name, $values, $filters);
                 $boolMustFilterQuery->add($boolShouldTermQuery);
             } elseif ('price' == $name) {
-                $boolShouldRangeQuery = $this->getBoolShouldRangeQuery($name, $values);
+                $boolShouldRangeQuery = $this->getBoolShouldRangeQuery($name, $values, $filters);
                 $boolMustFilterQuery->add($boolShouldRangeQuery);
             } elseif ('manufacturer' == $name) {
-                $boolShouldTermQuery = $this->getBoolShouldTermQuery($name, $values);
+                $boolShouldTermQuery = $this->getBoolShouldTermQuery($name, $values, $filters);
                 $boolMustFilterQuery->add($boolShouldTermQuery);
             } elseif ('weight' == $name) {
-                $boolShouldTermQuery = $this->getBoolShouldRangeQuery($name, $values);
+                $boolShouldTermQuery = $this->getBoolShouldRangeQuery($name, $values, $filters);
                 $boolMustFilterQuery->add($boolShouldTermQuery);
             } elseif ('quantity' == $name) {
-                $boolShouldTermQuery = $this->getBoolShouldTermQuery($name, $values);
+                $boolShouldTermQuery = $this->getBoolShouldTermQuery($name, $values, $filters);
                 $boolMustFilterQuery->add($boolShouldTermQuery);
             } elseif ('category' == $name) {
-                $boolShouldTermQuery = $this->getBoolShouldTermQuery($name, $values);
+                $boolShouldTermQuery = $this->getBoolShouldTermQuery($name, $values, $filters);
                 $boolMustFilterQuery->add($boolShouldTermQuery);
 
                 if (!empty($searchValues['categories'])) {
@@ -205,21 +285,69 @@ class FilterQueryBuilder extends AbstractQueryBuilder
             }
         }
 
-        $boolShouldCategoriesQuery = $this->getQueryFromCategories($idCategory);
-        $boolMustCategoriesQuery   = new BoolQuery();
-
-        if ($boolShouldCategoriesQuery instanceof BuilderInterface) {
-            $boolMustCategoriesQuery->add($boolShouldCategoriesQuery);
+        if ($controllerName == 'manufacturer') {
+            $termQuery = new TermQuery('id_manufacturer', $idEntity);
+            $boolMustManufacturerQuery = new BoolQuery();
+            $boolMustManufacturerQuery->add($termQuery, BoolQuery::MUST);
+            if (!empty($boolMustFilterQuery->getQueries())) {
+                $searchQuery->addQuery($boolMustFilterQuery);
+            }
+           $searchQuery->addQuery($this->getQueryFromManufacturer($idEntity), BoolQuery::MUST);
         }
 
-        if (!empty($boolMustFilterQuery->getQueries())) {
-            $searchQuery->addQuery($boolMustFilterQuery);
+        elseif ($controllerName == 'prices-drop') {
+            $context = Context::getContext();
+            $field = 'reduction_group_'.$context->customer->id_default_group.'_country_'.$context->country->id.'_currency_'.$context->currency->id;
+            $termQuery = new TermQuery($field, 0);
+            if (!empty($boolMustFilterQuery->getQueries())) {
+                $searchQuery->addQuery($boolMustFilterQuery);
+            }
+           $searchQuery->addQuery($termQuery, BoolQuery::MUST_NOT);
         }
 
-        if (!$skipCategoriesQuery) {
-            $searchQuery->addQuery($boolMustCategoriesQuery, BoolQuery::MUST);
+        elseif ($controllerName == 'best-sales') {
+            $termQuery = new RangeQuery('number_sold', [RangeQuery::GT => 5]);
+            if (!empty($boolMustFilterQuery->getQueries())) {
+                $searchQuery->addQuery($boolMustFilterQuery);
+            }
+           $searchQuery->addQuery($termQuery, BoolQuery::MUST);
         }
 
+        elseif ($controllerName == 'new-products') {
+            $date = date('Y-m-d H:m:s', strtotime('-'.(Configuration::get('PS_NB_DAYS_NEW_PRODUCT') ? (int) Configuration::get('PS_NB_DAYS_NEW_PRODUCT') : 20).' days'));
+            $termQuery = new RangeQuery('date_add', [RangeQuery::GT => $date]);
+            if (!empty($boolMustFilterQuery->getQueries())) {
+                $searchQuery->addQuery($boolMustFilterQuery);
+            }
+           $searchQuery->addQuery($termQuery, BoolQuery::MUST);
+        }
+
+        elseif ($controllerName == 'module-brad-search') {
+            // $termQuery = new RangeQuery('date_add', [RangeQuery::GT => $date]);
+            if (!empty($boolMustFilterQuery->getQueries())) {
+                $searchQuery->addQuery($boolMustFilterQuery, BoolQuery::MUST);
+            }
+           // $searchQuery->addQuery($termQuery, BoolQuery::MUST);
+        }
+
+        else {
+            $boolShouldCategoriesQuery = $this->getQueryFromCategories($idEntity, $controllerName);
+            $boolMustCategoriesQuery   = new BoolQuery();
+
+            if ($boolShouldCategoriesQuery instanceof BuilderInterface) {
+                $boolMustCategoriesQuery->add($boolShouldCategoriesQuery);
+            }
+
+            if (!empty($boolMustFilterQuery->getQueries())) {
+                $searchQuery->addQuery($boolMustFilterQuery);
+            }
+
+            if (!$skipCategoriesQuery) {
+                $searchQuery->addQuery($boolMustCategoriesQuery, BoolQuery::MUST);
+            }
+        }
+
+        // echo(json_encode($searchQuery->toArray()));
         return $searchQuery;
     }
 
@@ -230,44 +358,103 @@ class FilterQueryBuilder extends AbstractQueryBuilder
      *
      * @return BoolQuery|null
      */
-    protected function getQueryFromCategories($idCategory)
+    protected function getQueryFromCategories($idEntity)
+    {
+        return $this->getBoolShouldTermQuery('category', [$idEntity]);
+    }
+
+    /**
+     * Get manufacturer query
+     *
+     * @param int $idManufacturer
+     *
+     * @return BoolQuery|null
+     */
+    protected function getQueryFromManufacturer($idEntity)
+    {
+        $boolMustQuery = new BoolQuery();
+        $termQuery = new TermQuery('id_manufacturer', (int)$idEntity);
+        $boolMustQuery->add($termQuery, BoolQuery::MUST);
+
+        return $boolMustQuery;
+    }
+
+    /**
+     * Get prices-drop query
+     *
+     *
+     * @return BoolQuery|null
+     */
+    protected function getQueryFromPricesDrop()
     {
         $context = Context::getContext();
-        $idLang = $context->language->id;
-        $idShop = $context->shop->id;
-
-        /** @var \Brad $brad */
-        $brad = Module::getInstanceByName('brad');
-        /** @var CategoryRepository $categoryRepository */
-        $categoryRepository = $brad->getContainer()->get('em')->getRepository('BradCategory');
-
-        $inputName = 'category';
-        $category = new Category($idCategory);
-
-        $subCategories = $categoryRepository->findChildCategoriesNamesAndIds($category, $idLang, $idShop);
-
-        if (empty($subCategories)) {
-            return $this->getBoolShouldTermQuery($inputName, [$idCategory]);
-        }
-
-        $values = array_map(function($subCategory) {
-            return (int) $subCategory['id_category'];
-        }, $subCategories);
-
-        $boolShouldTermQuery = $this->getBoolShouldTermQuery($inputName, $values);
-
-        return $boolShouldTermQuery;
+        $field = 'reduction_group_'.$context->customer->id_default_group.'_country_'.$context->country->id.'_currency_'.$context->currency->id;
+        $termQuery = new TermQuery($field, 0);
+        $boolMustPricesDropQuery = new BoolQuery();
+        $boolMustPricesDropQuery->add($termQuery, BoolQuery::MUST_NOT);
+        return $boolMustPricesDropQuery;
     }
+
+    /**
+     * Get best-sales query
+     *
+     *
+     * @return BoolQuery|null
+     */
+    protected function getQueryFromBestSales()
+    {
+        $termQuery = new RangeQuery('number_sold', [RangeQuery::GT => 5]);
+        $boolQuery = new BoolQuery();
+        $boolQuery->add($termQuery, BoolQuery::MUST);
+
+        return $boolQuery;
+    }
+
+    /**
+     * Get new products query
+     *
+     *
+     * @return BoolQuery|null
+     */
+    protected function getQueryFromNewProducts()
+    {
+        $date = date('Y-m-d H:m:s', strtotime('-'.(Configuration::get('PS_NB_DAYS_NEW_PRODUCT') ? (int) Configuration::get('PS_NB_DAYS_NEW_PRODUCT') : 20).' days'));
+        $termQuery = new RangeQuery('date_add', [RangeQuery::GT => $date]);
+        $boolQuery = new BoolQuery();
+        $boolQuery->add($termQuery, BoolQuery::MUST);
+
+        return $boolQuery;
+    }
+
+    /**
+     * Get search query
+     *
+     *
+     * @return BoolQuery|null
+     */
+    protected function getQueryFromSearch()
+    {
+        $boolShouldQuery = new BoolQuery();
+
+        return $boolShouldQuery;
+    }
+
+    protected function getSearchAggregationFilter()
+    {
+
+    }
+
 
     /**
      * Get bool should query with terms query inside
      *
      * @param string $filterIntputName
      * @param array $values
+     * @param array $filters
      *
      * @return BoolQuery
      */
-    protected function getBoolShouldTermQuery($filterIntputName, array $values)
+    protected function getBoolShouldTermQuery($filterIntputName, array $values, array $filters = null)
     {
         $fieldName = NameConverter::getElasticsearchFieldName($filterIntputName);
 
@@ -277,9 +464,12 @@ class FilterQueryBuilder extends AbstractQueryBuilder
             if ('category' == $filterIntputName) {
                 $value = (int) $value;
             }
-
             $termQuery = new TermQuery($fieldName, $value);
             $boolShouldQuery->add($termQuery, BoolQuery::SHOULD);
+            if ($filters) {
+               $boolShouldQuery->addParameter('filter', $filters);
+            }
+            
         }
 
         return $boolShouldQuery;
@@ -290,10 +480,11 @@ class FilterQueryBuilder extends AbstractQueryBuilder
      *
      * @param string $filterName
      * @param array $values
+     * @param array $filters
      *
      * @return BoolQuery
      */
-    protected function getBoolShouldRangeQuery($filterName, array $values)
+    protected function getBoolShouldRangeQuery($filterName, array $values, array $filters = null)
     {
         $fieldName = NameConverter::getElasticsearchFieldName($filterName);
 
@@ -310,6 +501,10 @@ class FilterQueryBuilder extends AbstractQueryBuilder
                 'lt'  => (float) $value['max_value'] + 0.01,
             ];
 
+            if ($filters) {
+               $boolShouldQuery->addParameter('filter', $filters);
+            }
+
             $rangeQuery = new RangeQuery($fieldName, $params);
             $boolShouldQuery->add($rangeQuery, BoolQuery::SHOULD);
         }
@@ -322,10 +517,11 @@ class FilterQueryBuilder extends AbstractQueryBuilder
      *
      * @param string $filterIntputName
      * @param array $values
+     * @param array $filters
      *
      * @return BoolQuery
      */
-    protected function getBoolMustTermQuery($filterIntputName, $values)
+    protected function getBoolMustTermQuery($filterIntputName, $values, array $filters = null)
     {
         $fieldName = NameConverter::getElasticsearchFieldName($filterIntputName);
 
@@ -333,7 +529,10 @@ class FilterQueryBuilder extends AbstractQueryBuilder
 
         foreach ($values as $value) {
             $termQuery = new TermQuery($fieldName, $value);
-            $boolMustQuery->add($termQuery);
+            $boolMustQuery->add($termQuery, BoolQuery::MUST);
+            if ($filters) {
+               $boolShouldQuery->addParameter('filter', $filters);
+            }
         }
 
         return $boolMustQuery;

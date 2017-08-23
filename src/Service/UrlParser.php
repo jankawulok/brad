@@ -143,10 +143,10 @@ class UrlParser
     {
         $orderBy = Tools::getValue('orderby');
 
-        $availableOrderBy = [Sort::BY_NAME, Sort::BY_PRICE, Sort::BY_QUANTITY, Sort::BY_REFERENCE, Sort::BY_RELEVANCE];
+        $availableOrderBy = [Sort::BY_NAME, Sort::BY_PRICE, Sort::BY_QUANTITY, Sort::BY_REFERENCE, Sort::BY_NUMBER_SOLD, Sort::BY_RELEVANCE];
 
         if (!in_array($orderBy, $availableOrderBy)) {
-            $orderBy = Sort::BY_QUANTITY;
+            $orderBy = Sort::BY_RELEVANCE;
         }
 
         return $orderBy;
@@ -188,13 +188,43 @@ class UrlParser
      */
     public function getIdCategory()
     {
-        $idCategory = (int) Tools::getValue('id_category');
-
-        if (!is_int($idCategory) || !$idCategory) {
-            $idCategory = (int) Configuration::get('PS_HOME_CATEGORY');
+        if (Tools::getValue('controller_name') == 'category') {
+            return (int) Tools::getValue('id_entity');
         }
+        else
+        {
+            return (int) \Category::getRootCategory($this->context->language->id, $this->context->shop)->id;
+        }
+    }
 
-        return $idCategory;
+    /**
+     * Get current entity ID
+     *
+     * @return int
+     */
+    public function getIdEntity()
+    {
+        return (int) Tools::getValue('id_entity');
+    }
+
+    /**
+     * Get current manufacturer ID
+     *
+     * @return int | bool
+     */
+    public function getIdManufacturer()
+    {
+        return (int) Tools::getValue('id_manufacturer');
+    }
+
+    /**
+     * Get current controller name
+     *
+     * @return string
+     */
+    public function getControllerName()
+    {
+        return Tools::getValue('controller_name');
     }
 
     /**

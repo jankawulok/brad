@@ -90,6 +90,9 @@ class IndexBuilder
                             'type' => 'date',
                             "format" => "yyyy-MM-dd HH:mm:ss",
                         ],
+                        'manufacturer_name' => [
+                            "type" => 'text'
+                        ],
                         'reference' => [
                             'type' => 'string',
                             'fields' => [
@@ -168,9 +171,9 @@ class IndexBuilder
                 'type' => 'string',
                 'fields' => [
                     'raw' => [
-                        'type' => 'string',
+                        'type' => 'keyword',
                         // "analyzer" => "simple"
-                        'index' => 'not_analyzed',
+                        // 'index' => 'not_analyzed',
                     ],
                 ],
             ];
